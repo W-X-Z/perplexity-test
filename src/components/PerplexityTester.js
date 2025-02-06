@@ -62,6 +62,8 @@ export default function PerplexityTester() {
         returnRelatedQuestions
       });
 
+      console.log('API 응답 데이터:', data);
+
       const newMessage = {
         id: Date.now(),
         userPrompt,
@@ -107,6 +109,34 @@ export default function PerplexityTester() {
                   <div className="prose prose-sm">
                     {chat.response}
                   </div>
+                  
+                  {/* 이미지 영역 추가 */}
+                  {chat.images?.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-500 mb-2">이미지</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        {chat.images.map((image, index) => {
+                          console.log('이미지 데이터:', image);
+                          return (
+                            <div key={index} className="relative aspect-video">
+                              <img
+                                src={image.url || image.image_url || image}
+                                alt={image.title || image.alt || '생성된 이미지'}
+                                className="rounded-lg object-cover w-full h-full"
+                                onError={(e) => {
+                                  console.error('이미지 로드 실패:', e);
+                                  e.target.src = 'fallback-image-url';
+                                }}
+                              />
+                              {image.title && (
+                                <p className="text-xs text-gray-500 mt-1">{image.title}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* 관련 질문 영역 추가 */}
                   {chat.relatedQuestions?.length > 0 && (

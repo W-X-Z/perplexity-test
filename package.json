@@ -1,7 +1,7 @@
 {
   "name": "perplexity",
   "version": "1.0.0",
-  "homepage": "https://github.com/W-X-Z/perplexity-test",
+  "homepage": "https://w-x-z.github.io/perplexity-test",
   "main": "PerplexityTester.js",
   "scripts": {
     "start": "react-scripts start",
@@ -19,8 +19,8 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1"
   },
   "browserslist": {

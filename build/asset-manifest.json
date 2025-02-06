@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/perplexity-test/static/css/main.30ce3317.css",
+    "main.js": "/perplexity-test/static/js/main.10d87146.js",
+    "index.html": "/perplexity-test/index.html",
+    "main.30ce3317.css.map": "/perplexity-test/static/css/main.30ce3317.css.map",
+    "main.10d87146.js.map": "/perplexity-test/static/js/main.10d87146.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.30ce3317.css",
+    "static/js/main.10d87146.js"
+  ]
+}
