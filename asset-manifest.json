@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/perplexity-test/static/css/main.30ce3317.css",
-    "main.js": "/perplexity-test/static/js/main.eb968bf9.js",
+    "main.css": "/perplexity-test/static/css/main.44b77d50.css",
+    "main.js": "/perplexity-test/static/js/main.f1015d50.js",
     "index.html": "/perplexity-test/index.html",
-    "main.30ce3317.css.map": "/perplexity-test/static/css/main.30ce3317.css.map",
-    "main.eb968bf9.js.map": "/perplexity-test/static/js/main.eb968bf9.js.map"
+    "main.44b77d50.css.map": "/perplexity-test/static/css/main.44b77d50.css.map",
+    "main.f1015d50.js.map": "/perplexity-test/static/js/main.f1015d50.js.map"
   },
   "entrypoints": [
-    "static/css/main.30ce3317.css",
-    "static/js/main.eb968bf9.js"
+    "static/css/main.44b77d50.css",
+    "static/js/main.f1015d50.js"
   ]
 }
