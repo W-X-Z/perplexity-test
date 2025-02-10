@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { callPerplexityApi } from '../api/perplexityApi';
-import { InputField } from './common/InputField';
-import { LoadingSpinner } from './common/LoadingSpinner';
-import { Toast } from './common/Toast';
-import { useToast } from '../hooks/useToast';
-import { MODELS, DEFAULT_VALUES } from '../constants';
-import { ResponseSection } from './common/ResponseSection';
-import { AdvancedSettings } from './common/AdvancedSettings';
+import { callPerplexityApi } from '../api/perplexityApi.js';
+import { InputField } from './common/InputField.js';
+import { LoadingSpinner } from './common/LoadingSpinner.js';
+import { Toast } from './common/Toast.js';
+import { useToast } from '../hooks/useToast.js';
+import { MODELS, DEFAULT_VALUES } from '../constants/index.js';
+import { ResponseSection } from './common/ResponseSection.js';
+import { AdvancedSettings } from './common/AdvancedSettings.js';
 
 export default function PerplexityTester() {
   const [apiKey, setApiKey] = useState(localStorage.getItem("apiKey") || "");
@@ -14,7 +14,7 @@ export default function PerplexityTester() {
   const [userPrompt, setUserPrompt] = useState("Provide a brief introduction of stock TSLA | NYSE | 테슬라");
   const [model, setModel] = useState("sonar");
   const [temperature, setTemperature] = useState(0.2);
-  const [maxTokens, setMaxTokens] = useState(200);
+  const [maxTokens, setMaxTokens] = useState(DEFAULT_VALUES.MAX_TOKENS);
   const [topP, setTopP] = useState(0.9);
   const [frequencyPenalty, setFrequencyPenalty] = useState(1.0);
   const [presencePenalty, setPresencePenalty] = useState(0);
@@ -26,10 +26,21 @@ export default function PerplexityTester() {
   const [returnRelatedQuestions, setReturnRelatedQuestions] = useState(DEFAULT_VALUES.RETURN_RELATED_QUESTIONS);
   const [searchRecency, setSearchRecency] = useState(DEFAULT_VALUES.SEARCH_RECENCY);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [chatHistory, setChatHistory] = useState(() => {
-    const saved = localStorage.getItem('chatHistory');
-    return saved ? JSON.parse(saved) : [];
+  const [chatHistories, setChatHistories] = useState(() => {
+    const saved = localStorage.getItem('chatHistories');
+    return saved ? JSON.parse(saved) : [{
+      id: 'default',
+      name: formatDate(new Date()),
+      messages: [],
+      createdAt: new Date().toISOString()
+    }];
   });
+
+  const [currentChatId, setCurrentChatId] = useState(() => {
+    return chatHistories[0]?.id || 'default';
+  });
+
+  const currentChat = chatHistories.find(chat => chat.id === currentChatId) || chatHistories[0];
 
   const { showToast } = useToast();
 
@@ -38,8 +49,8 @@ export default function PerplexityTester() {
   }, [apiKey]);
 
   useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-  }, [chatHistory]);
+    localStorage.setItem('chatHistories', JSON.stringify(chatHistories));
+  }, [chatHistories]);
 
   const handleSubmit = async () => {
     try {
@@ -62,27 +73,107 @@ export default function PerplexityTester() {
         returnRelatedQuestions
       });
 
-      console.log('API 응답 데이터:', data);
+      console.log('API 원본 응답:', JSON.stringify(data, null, 2));
 
-      const newMessage = {
-        id: Date.now(),
-        userPrompt,
-        response: data?.choices?.[0]?.message?.content || '응답이 없습니다.',
-        citations: data?.citations || [],
-        timestamp: new Date().toISOString(),
-        relatedQuestions: data?.related_questions || [],
-        images: data?.images || []
-      };
+      if (!data) {
+        throw new Error('API 응답이 없습니다');
+      }
 
-      setChatHistory(prev => [...prev, newMessage]);
-      setResponse(newMessage.response);
-      setCitations(newMessage.citations);
+      if (!data.choices?.[0]?.message?.content || data.choices[0]?.finish_reason === 'length') {
+        console.warn('응답이 잘리거나 비어있습니다:', data.choices[0]?.finish_reason);
+        const fallbackResponse = data.choices?.[0]?.message?.content || 
+          (data.citations?.length > 0 
+            ? `참고 자료를 확인해주세요: ${data.citations[0]}`
+            : '응답을 생성하지 못했습니다. 다시 시도해주세요.');
+
+        const newMessage = {
+          id: Date.now(),
+          userPrompt,
+          response: fallbackResponse,
+          citations: data.citations || [],
+          timestamp: new Date().toISOString(),
+          relatedQuestions: data.related_questions || [],
+          images: data.images || []
+        };
+
+        setChatHistories(prev => prev.map(chat => {
+          if (chat.id === currentChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, newMessage]
+            };
+          }
+          return chat;
+        }));
+
+        setResponse(fallbackResponse);
+        setCitations(data.citations || []);
+        showToast('warning', '응답이 비어있습니다. 다시 시도해주세요.');
+      } else {
+        const newMessage = {
+          id: Date.now(),
+          userPrompt,
+          response: data.choices[0].message.content,
+          citations: data.citations || [],
+          timestamp: new Date().toISOString(),
+          relatedQuestions: data.related_questions || [],
+          images: data.images || []
+        };
+
+        setChatHistories(prev => prev.map(chat => {
+          if (chat.id === currentChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, newMessage]
+            };
+          }
+          return chat;
+        }));
+
+        setResponse(data.choices[0].message.content);
+        setCitations(data.citations || []);
+      }
+      
       setUserPrompt('');
     } catch (error) {
+      console.error('API 오류:', error);
       showToast('error', error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (date) => {
+    const now = new Date();
+    const targetDate = new Date(date);
+    
+    if (targetDate.toDateString() === now.toDateString()) {
+      return `오늘 ${targetDate.getHours().toString().padStart(2, '0')}:${targetDate.getMinutes().toString().padStart(2, '0')}`;
+    }
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (targetDate.toDateString() === yesterday.toDateString()) {
+      return `어제 ${targetDate.getHours().toString().padStart(2, '0')}:${targetDate.getMinutes().toString().padStart(2, '0')}`;
+    }
+    
+    return `${targetDate.getMonth() + 1}월 ${targetDate.getDate()}일 ${targetDate.getHours().toString().padStart(2, '0')}:${targetDate.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const createNewChat = () => {
+    const newChat = {
+      id: Date.now().toString(),
+      name: formatDate(new Date()),
+      messages: [],
+      createdAt: new Date().toISOString()
+    };
+    setChatHistories(prev => [...prev, newChat]);
+    setCurrentChatId(newChat.id);
+    setUserPrompt('');
+  };
+
+  const selectChat = (chatId) => {
+    setCurrentChatId(chatId);
   };
 
   return (
@@ -96,9 +187,34 @@ export default function PerplexityTester() {
             </h1>
           </header>
 
+          {/* 채팅 선택 드롭다운과 새 채팅 버튼 */}
+          <div className="flex items-center justify-between mb-6">
+            <select 
+              value={currentChatId}
+              onChange={(e) => selectChat(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white"
+            >
+              {chatHistories
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .map(chat => (
+                  <option key={chat.id} value={chat.id}>
+                    {chat.name} {chat.messages.length > 0 ? `(${chat.messages.length})` : ''}
+                  </option>
+                ))}
+            </select>
+            
+            <button
+              onClick={createNewChat}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            >
+              <span>새 채팅</span>
+              <span>+</span>
+            </button>
+          </div>
+
           {/* 채팅 메시지 영역 */}
           <div className="flex-1 overflow-y-auto space-y-6 mb-6 h-full">
-            {chatHistory.map((chat) => (
+            {currentChat.messages.map((chat) => (
               <div key={chat.id} className="space-y-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-500 mb-2">User</p>

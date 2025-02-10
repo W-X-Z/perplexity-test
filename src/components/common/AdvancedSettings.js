@@ -1,5 +1,5 @@
-import { InputField } from './InputField';
-import { SEARCH_RECENCY_OPTIONS } from '../../constants';
+import { InputField } from './InputField.js';
+import { SEARCH_RECENCY_OPTIONS } from '../../constants/index.js';
 
 export const AdvancedSettings = ({ 
   topK, setTopK,

@@ -1,5 +1,5 @@
 import React from "react";
-import PerplexityTester from "./components/PerplexityTester";
+import PerplexityTester from "./components/PerplexityTester.js";
 
 function App() {
   return (

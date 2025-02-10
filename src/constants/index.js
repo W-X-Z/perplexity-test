@@ -8,7 +8,7 @@ export const MODELS = {
 
 export const DEFAULT_VALUES = {
   TEMPERATURE: 0.2,
-  MAX_TOKENS: 200,
+  MAX_TOKENS: 2000,
   TOP_P: 0.9,
   TOP_K: 0,
   FREQUENCY_PENALTY: 1.0,
